@@ -23,41 +23,36 @@ void setup()
   Serial.println();
 
 }
-void loop() 
-{
+
+String lookup_card(){
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) 
   {
-    return;
+    return "";
   }
   // Select one of the cards
   if ( ! mfrc522.PICC_ReadCardSerial()) 
   {
-    return;
+    return "";
   }
   //Show UID on serial monitor
-  Serial.print("UID tag :");
   String content= "";
   byte letter;
   for (byte i = 0; i < mfrc522.uid.size; i++) 
   {
-     Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-     Serial.print(mfrc522.uid.uidByte[i], HEX);
      content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
      content.concat(String(mfrc522.uid.uidByte[i], HEX));
   }
-  Serial.println();
-  Serial.print("Message : ");
+  return content;
+}
+
+void loop() 
+{
+  String content = lookup_card();
   content.toUpperCase();
-  if (content.substring(1) == "BD 31 15 2B") //change here the UID of the card/cards that you want to give access
-  {
-    Serial.println("Authorized access");
-    Serial.println();
-    delay(3000);
+  if (content == ""){
+    return;
   }
- 
- else   {
-    Serial.println(" Access denied");
-    delay(3000);
-  }
+  Serial.println(content);
+  delay(500);
 } 
