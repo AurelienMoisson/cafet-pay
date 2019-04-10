@@ -1,6 +1,7 @@
 #! /usr/bin/python3
 from serial import Serial
 from sys import stdout
+from accounts.link import *
 
 for i in range(10):
     tty = "/dev/ttyUSB"+str(i)
