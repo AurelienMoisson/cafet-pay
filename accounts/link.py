@@ -19,11 +19,11 @@ def create_table(cursor, table_name, fields):
 
 def insert_into(cursor, table_name, columns, values):
     col = ", ".join(columns)
-    val = ", ".join('"{}"'.format(v) for v in values)
+    val = ", ".join('?' for v in values)
     command = "INSERT INTO {} ({}) VALUES ({})".format(table_name,
-                                                            col,
-                                                            val)
-    cursor.execute(command)
+                                                       col,
+                                                       val)
+    cursor.execute(command, values)
 
 
 class DataBase:
@@ -57,12 +57,13 @@ class DataBase:
                     ["email", "firstname", "lastname"],
                     [email, firstname, lastname])
     def find_id(self, email):
-        command = 'SELECT account_id FROM accounts WHERE email = "{}"'
-        command = command.format(email)
-        result = self.cursor.execute(command)
+        command = 'SELECT account_id FROM accounts WHERE email = ?'
+        result = self.cursor.execute(command, [email])
         return result.fetchone()[0]
     def find_account_like(self, email='*', firstname='*', lastname='*'):
-        pass
+        command = 'SELECT * FROM accounts WHERE email LIKE ? AND firstname LIKE ? AND lastname LIKE ?'
+        result = self.cursor.execute(command, [email, firstname, lastname])
+        return
     def add_card(self, card_id, account_id):
         pass
     def get_account_from_card(self, card_id):
