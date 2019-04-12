@@ -43,7 +43,7 @@ class DataBase:
 
         create_table(self.cursor,
                      "cards",
-                     [("card_id", "integer", "PRIMARY KEY"),
+                     [("card_id", "text", "PRIMARY KEY"),
                       ("account_id", "integer")])
 
         create_table(self.cursor,
@@ -60,13 +60,20 @@ class DataBase:
         command = 'SELECT account_id FROM accounts WHERE email = ?'
         result = self.cursor.execute(command, [email])
         return result.fetchone()[0]
-    def find_account_like(self, email='*', firstname='*', lastname='*'):
+    def find_account_like(self, email='%', firstname='%', lastname='%'):
         command = 'SELECT * FROM accounts WHERE email LIKE ? AND firstname LIKE ? AND lastname LIKE ?'
         result = self.cursor.execute(command, [email, firstname, lastname])
-        return
+        return list(result)
     def add_card(self, card_id, account_id):
-        pass
+        insert_into(self.cursor,
+                "cards",
+                ["card_id", "account_id"],
+                [card_id, account_id])
     def get_account_from_card(self, card_id):
-        pass
+        command = "SELECT account_id FROM cards WHERE card_id = ?"
+        result = self.cursor.execute(command, [card_id])
+        return result.fetchone()[0]
     def find_account(self, account_id):
-        pass
+        command = "SELECT * FROM accounts WHERE account_id = ?"
+        result = self.cursor.execute(command, [account_id])
+        return result.fetchone()
