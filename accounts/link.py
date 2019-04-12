@@ -4,6 +4,8 @@ library used to create records of cards and transactions
 positive transactions means money added to an account
 negative transactions means money removed from an account (or spent)
 """
+# TODO : make sure nothing is lost if the program crashes
+#        or if the computer loses power
 
 
 def create_table(cursor, table_name, fields):
