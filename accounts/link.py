@@ -1,11 +1,11 @@
 class DataBase:
     def __init__(self, path):
         pass
-    def add_account(name, surname):
+    def add_account(email, name, surname):
         pass
-    def find_id(name, surname):
+    def find_id(email, name, surname):
         pass
-    def find_account_like(name, surname):
+    def find_account_like(email='*', name='*', surname='*'):
         pass
     def add_card(card_id, account_id):
         pass
