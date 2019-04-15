@@ -1,4 +1,5 @@
 import sqlite3
+from time import time
 """
 library used to create records of cards and transactions
 positive transactions means money added to an account
@@ -50,9 +51,17 @@ class DataBase:
 
         create_table(self.cursor,
                      "transactions",
-                     [("time", "integer", "PRIMARY KEY"),
+                     [("transaction_id", "integer", "PRIMARY KEY"),
+                      ("time", "integer"),
                       ("account_id", "integer"),
                       ("amount", "integer")])
+
+        create_table(self.cursor,
+                     "purchases",
+                     [("transaction_id", "integer"),
+                      ("item", "text"),
+                      ("price", "integer"),
+                      ("quantity", "integer")])
     def add_account(self, email, firstname, lastname):
         insert_into(self.cursor,
                     "accounts",
@@ -79,3 +88,26 @@ class DataBase:
         command = "SELECT * FROM accounts WHERE account_id = ?"
         result = self.cursor.execute(command, [account_id])
         return result.fetchone()
+
+    def add_transaction(self, account_id, items, transaction_time = None):
+        """
+        items : [(item name, item price, quantity bought), ...]
+        transaction_time as unix time
+        """
+        if transaction_time == None:
+            transaction_time = time()
+        total = sum(t[1]*t[2] for t in items)
+        # add transaction
+        insert_into(self.cursor,
+                    "transactions",
+                    ["time", "account_id", "amount"],
+                    [str(int(transaction_time)), account_id, str(total)])
+        # find transaction id
+        command = "SELECT transaction_id FROM transactions WHERE rowid = (SELECT last_insert_rowid())"
+        transaction_id, = self.cursor.execute(command).fetchone()
+        # add each item purchased
+        for item_name, item_price, quantity in items:
+            insert_into(self.cursor,
+                        "purchases",
+                        ["transaction_id", "item", "price", "quantity"],
+                        [transaction_id, item_name, item_price, quantity])
