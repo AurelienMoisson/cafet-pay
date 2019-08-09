@@ -1,0 +1,19 @@
+{
+  "name": "cafet-pay",
+  "version": "1.0.0",
+  "description": "This project is meant to enable students at my school to pay with their school cards.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AurelienMoisson/cafet-pay.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AurelienMoisson/cafet-pay/issues"
+  },
+  "homepage": "https://github.com/AurelienMoisson/cafet-pay#readme"
+}
