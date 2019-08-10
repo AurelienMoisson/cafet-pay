@@ -36,13 +36,17 @@ String lookup_card(){
   return mfrc522.uid.uidByte;
 }
 
+const String base = "0123456789ABCDEF";
+
 void loop() 
 {
   String content = lookup_card();
-  content.toUpperCase();
+  for (int i=0; content[i] != 0; i++) {
+    Serial.print(base[content[i]>>4]);
+    Serial.print(base[content[i]&&15]);
+  }
   if (content == ""){
     return;
   }
-  Serial.println(content);
   delay(500);
 } 
