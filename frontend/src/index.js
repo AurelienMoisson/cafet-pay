@@ -4,6 +4,7 @@ const device = serial.connect()
 if (device) {
   console.log('connected to serial Port')
 
+  device.write('test\n')
   device.on('data', (data) => {console.log('Data:', data)})
 } else {
   console.log('could not connect')
