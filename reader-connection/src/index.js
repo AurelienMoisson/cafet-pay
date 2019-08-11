@@ -1,11 +1,12 @@
 const serial = require('./serial')
+const express = require('express')
 
-const device = serial.connect()
-if (device) {
+const cardReader = serial.connect()
+if (cardReader) {
   console.log('connected to serial Port')
 
-  device.write('test\n')
-  device.on('data', (data) => {console.log('Data:', data)})
+  cardReader.write('test\n')
+  cardReader.on('card', (card) => {console.log('Card:', card)})
 } else {
   console.log('could not connect')
 }
