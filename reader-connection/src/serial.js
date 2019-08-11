@@ -25,7 +25,7 @@ class CardReader {
   constructor(device) {
     console.debug('making CardReader')
     this.device = device
-    device.on('data', this.parse)
+    device.on('data', (data) => this.parse(data))
     this.onFunctions = {'card':null}
     this.previousCards = []
     this.buffer = ""
@@ -34,11 +34,10 @@ class CardReader {
   }
 
   parse(data) {
-    console.debug('parsing data')
     var received = ''+data
     for (var i = 0; i<received.length; i++){
-      if (received[i] == '\n') {
-        sendCard()
+      if (received[i] === '\n') {
+        this.sendCard()
       } else {
         this.buffer += received[i]
       }
@@ -46,7 +45,6 @@ class CardReader {
   }
 
   sendCard() {
-    console.debug('sending card')
     if (this.onFunctions.card) {
       this.onFunctions.card(this.buffer)
     } else {

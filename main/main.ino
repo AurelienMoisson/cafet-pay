@@ -50,6 +50,8 @@ void loop()
   }
   if (content == ""){
     return;
+  } else {
+    Serial.println("");
   }
   delay(500);
 } 
