@@ -1,8 +1,10 @@
 import React from 'react';
+import Button from 'react-bootstrap/Button';
 
-function form() {
+function Form() {
   return (
+    <Button> test </Button>
   )
 }
 
-export default form;
+export default Form;
