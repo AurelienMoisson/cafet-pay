@@ -1,9 +1,13 @@
 import React, {useState} from 'react';
 import Button from 'react-bootstrap/Button';
-import products from "../products";
+import {getProducts} from "../api/products";
 import "../styles/form.scss"
 
+
 function Form() {
+
+  const products = getProducts()
+
   let [selected, setSelected] = useState({})
   console.log(selected)
 
@@ -21,7 +25,7 @@ function Form() {
   return (
     <div className="form">
       <div className="flex-container">
-        {getButtons(addItem)}
+        {getButtons(products, addItem)}
       </div>
       <div>
         {showSelected(selected)}
@@ -30,7 +34,7 @@ function Form() {
   )
 }
 
-function getButtons(addItem) {
+function getButtons(products, addItem) {
   let results = [];
   for (var product of products) {
     results.push(getIndividualButton(product, addItem))
