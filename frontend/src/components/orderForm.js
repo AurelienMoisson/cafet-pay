@@ -39,8 +39,8 @@ function Form() {
 
   return (
     <div className="form">
-      <div className="flex-container">
-        {getButtons(products, addItem)}
+      <div>
+        {getProductForm(products, addItem)}
       </div>
       <div>
         {showSelected(products, selected, removeAllItem, removeOneOfItem)}
@@ -50,12 +50,35 @@ function Form() {
   )
 }
 
-function getButtons(products, addItem) {
+function getProductForm(products, addItem) {
+  let results = []
+  let categories = {}
+  for (var product of products) {
+    if (categories[product.category]) {
+      categories[product.category].push(product)
+    } else {
+      categories[product.category] = [product]
+    }
+  }
+  for (var category in categories) {
+    results.push(getCategoryForm(category, categories[category], addItem))
+  }
+  return results
+}
+
+function getCategoryForm(categoryName, products, addItem) {
   let results = [];
   for (var product of products) {
     results.push(getIndividualButton(product, addItem))
   }
-  return results;
+  return (
+    <div className="category flex-container">
+      <span className="category-name">{categoryName}</span>
+      <div className="category-choices">
+        {results}
+      </div>
+    </div>
+  );
 }
 
 function getIndividualButton(product, addItem) {

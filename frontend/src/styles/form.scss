@@ -8,6 +8,16 @@
   align-content: stretch;
 }
 
+.category-name {
+  min-width: 100px;
+  // The next line centers the text.
+  // The value was chosen by trial and error and I'm sorry...
+  line-height: 30px;
+}
+.category-choices {
+  padding:3px;
+}
+
 .selected-product {
   margin: 3px;
   background: #0004;
