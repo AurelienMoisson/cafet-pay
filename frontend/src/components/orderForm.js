@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import Button from 'react-bootstrap/Button';
 import {getProducts} from "../api/products";
+import Total from "./total";
 import "../styles/form.scss"
 
 
@@ -30,6 +31,7 @@ function Form() {
       <div>
         {showSelected(selected)}
       </div>
+      <Total total={getTotal(selected, products)}/>
     </div>
   )
 }
@@ -68,6 +70,18 @@ function selectedProduct(id, number) {
       <Button onClick={()=>{}}/>
     </div>
   )
+}
+
+function getTotal(selected, products) {
+  var tot = 0
+  for (var product of products) {
+    console.log("product:",product)
+    console.log('number:', selected[product.id])
+    tot -= + !!selected[product.id] && selected[product.id] * product.price
+    console.log(tot)
+  }
+  console.log(tot)
+  return tot
 }
 
 export default Form;
