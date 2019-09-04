@@ -45,7 +45,7 @@ function Form() {
         {getButtons(products, addItem)}
       </div>
       <div>
-        {showSelected(selected, removeAllItem, removeOneOfItem)}
+        {showSelected(products, selected, removeAllItem, removeOneOfItem)}
       </div>
       <Total total={getTotal(selected, products)}/>
     </div>
@@ -66,13 +66,13 @@ function getIndividualButton(product, addItem) {
   )
 }
 
-function showSelected(selected, removeAllItem, removeOneOfItem) {
+function showSelected(products, selected, removeAllItem, removeOneOfItem) {
   var result = []
   console.log("showSelected:",selected)
   for (var id in selected) {
     console.log(id)
     if (selected[id]) {
-      result.push(selectedProduct(id, selected[id], removeAllItem, removeOneOfItem))
+      result.push(selectedProduct(products.find((product)=>(product.id==id)), selected[id], removeAllItem, removeOneOfItem))
     }
   }
   console.log("showSelected called")
@@ -83,14 +83,14 @@ function showSelected(selected, removeAllItem, removeOneOfItem) {
   )
 }
 
-function selectedProduct(id, number, removeAllItem, removeOneOfItem) {
+function selectedProduct(product, number, removeAllItem, removeOneOfItem) {
   return (
     <div className="selected-product">
       <div>
-        {id}, {number}
+        {product.name} : {number}
       </div>
-      <Button onClick={()=>{removeOneOfItem(id)}}>-</Button>
-      <Button onClick={()=>{removeAllItem(id)}}>x</Button>
+      <Button onClick={()=>{removeOneOfItem(product.id)}}>-</Button>
+      <Button onClick={()=>{removeAllItem(product.id)}}>x</Button>
     </div>
   )
 }
