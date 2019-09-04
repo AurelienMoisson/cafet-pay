@@ -10,7 +10,6 @@ function Form() {
   const products = getProducts()
 
   let [selected, setSelected] = useState({})
-  console.log(selected)
 
   function addItem(productId) {
     var newSelected = {...selected}
@@ -20,7 +19,6 @@ function Form() {
       newSelected[productId] = 1;
     }
     setSelected(newSelected);
-    console.log('addItem called', selected)
   }
 
   function removeAllItem(productId) {
@@ -68,14 +66,11 @@ function getIndividualButton(product, addItem) {
 
 function showSelected(products, selected, removeAllItem, removeOneOfItem) {
   var result = []
-  console.log("showSelected:",selected)
   for (var id in selected) {
-    console.log(id)
     if (selected[id]) {
       result.push(selectedProduct(products.find((product)=>(product.id==id)), selected[id], removeAllItem, removeOneOfItem))
     }
   }
-  console.log("showSelected called")
   return (
     <div className="flex-container">
       {result}
@@ -98,12 +93,8 @@ function selectedProduct(product, number, removeAllItem, removeOneOfItem) {
 function getTotal(selected, products) {
   var tot = 0
   for (var product of products) {
-    console.log("product:",product)
-    console.log('number:', selected[product.id])
     tot -= + !!selected[product.id] && selected[product.id] * product.price
-    console.log(tot)
   }
-  console.log(tot)
   return tot
 }
 
