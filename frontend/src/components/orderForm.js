@@ -67,7 +67,7 @@ function showSelected(selected) {
 
 function selectedProduct(id, number) {
   return (
-    <div>
+    <div className="selected-product">
       <div>
         {id}, {number}
       </div>
