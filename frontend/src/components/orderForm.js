@@ -12,15 +12,31 @@ function Form() {
   let [selected, setSelected] = useState({})
   console.log(selected)
 
-  function addItem(product) {
+  function addItem(productId) {
     var newSelected = {...selected}
-    if (selected[product.id]) {
-      newSelected[product.id] += 1;
+    if (selected[productId]) {
+      newSelected[productId] += 1;
     } else {
-      newSelected[product.id] = 1;
+      newSelected[productId] = 1;
     }
     setSelected(newSelected);
     console.log('addItem called', selected)
+  }
+
+  function removeAllItem(productId) {
+    var newSelected = {...selected}
+    if (selected[productId]) {
+      newSelected[productId] = 0;
+      setSelected(newSelected);
+    }
+  }
+
+  function removeOneOfItem(productId) {
+    var newSelected = {...selected}
+    if (selected[productId]) {
+      newSelected[productId] = newSelected[productId] - (newSelected[productId] > 0);
+      setSelected(newSelected);
+    }
   }
 
   return (
@@ -29,7 +45,7 @@ function Form() {
         {getButtons(products, addItem)}
       </div>
       <div>
-        {showSelected(selected)}
+        {showSelected(selected, removeAllItem, removeOneOfItem)}
       </div>
       <Total total={getTotal(selected, products)}/>
     </div>
@@ -46,16 +62,18 @@ function getButtons(products, addItem) {
 
 function getIndividualButton(product, addItem) {
   return (
-    <Button onClick={()=>{addItem(product)}} key={product.id}> {product.name} </Button>
+    <Button onClick={()=>{addItem(product.id)}} key={product.id}> {product.name} </Button>
   )
 }
 
-function showSelected(selected) {
+function showSelected(selected, removeAllItem, removeOneOfItem) {
   var result = []
   console.log("showSelected:",selected)
   for (var id in selected) {
     console.log(id)
-    result.push(selectedProduct(id, selected[id]))
+    if (selected[id]) {
+      result.push(selectedProduct(id, selected[id], removeAllItem, removeOneOfItem))
+    }
   }
   console.log("showSelected called")
   return (
@@ -65,14 +83,14 @@ function showSelected(selected) {
   )
 }
 
-function selectedProduct(id, number) {
+function selectedProduct(id, number, removeAllItem, removeOneOfItem) {
   return (
     <div className="selected-product">
       <div>
         {id}, {number}
       </div>
-      <Button onClick={()=>{}}>-</Button>
-      <Button onClick={()=>{}}>x</Button>
+      <Button onClick={()=>{removeOneOfItem(id)}}>-</Button>
+      <Button onClick={()=>{removeAllItem(id)}}>x</Button>
     </div>
   )
 }
