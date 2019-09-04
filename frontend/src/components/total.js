@@ -3,6 +3,7 @@ import React from 'react';
 export default function Total({total}) {
   return (
     <div>
+      Total :
       {formatTotal(total)}
     </div>
   )
@@ -13,6 +14,6 @@ function formatTotal(total) {
   if (total) {
     result = total>0?'+':''
   }
-  result += total + '$'
+  result += total + '€'
   return result
 }

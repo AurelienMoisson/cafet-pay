@@ -58,7 +58,11 @@ function showSelected(selected) {
     result.push(selectedProduct(id, selected[id]))
   }
   console.log("showSelected called")
-  return result
+  return (
+    <div className="flex-container">
+      {result}
+    </div>
+  )
 }
 
 function selectedProduct(id, number) {
@@ -67,7 +71,8 @@ function selectedProduct(id, number) {
       <div>
         {id}, {number}
       </div>
-      <Button onClick={()=>{}}/>
+      <Button onClick={()=>{}}>-</Button>
+      <Button onClick={()=>{}}>x</Button>
     </div>
   )
 }
