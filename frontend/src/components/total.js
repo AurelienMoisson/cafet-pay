@@ -1,8 +1,9 @@
 import React from 'react';
+import '../styles/total.scss';
 
 export default function Total({total}) {
   return (
-    <div>
+    <div className='total'>
       Total :
       {formatTotal(total)}
     </div>
