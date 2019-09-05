@@ -1,7 +1,10 @@
 import React, {useState} from 'react';
-import Button from 'react-bootstrap/Button';
+
 import {getProducts} from "../api/products";
+import ShowSelected from './selected';
+import GetProductForm from './productButtons';
 import Total from "./total";
+
 import "../styles/form.scss"
 
 
@@ -39,86 +42,15 @@ function Form() {
 
   return (
     <div className="form">
+        <GetProductForm products={products} addItem={addItem}/>
       <div>
-        {getProductForm(products, addItem)}
+        <ShowSelected products={products} selected={selected} removeAllItem={removeAllItem} removeOneOfItem={removeOneOfItem}/>
       </div>
-      <div>
-        {showSelected(products, selected, removeAllItem, removeOneOfItem)}
-      </div>
-      <Total total={getTotal(selected, products)}/>
+      <Total selected={selected} products={products}/>
     </div>
   )
 }
 
-function getProductForm(products, addItem) {
-  let results = []
-  let categories = {}
-  for (var product of products) {
-    if (categories[product.category]) {
-      categories[product.category].push(product)
-    } else {
-      categories[product.category] = [product]
-    }
-  }
-  for (var category in categories) {
-    results.push(getCategoryForm(category, categories[category], addItem))
-  }
-  return results
-}
 
-function getCategoryForm(categoryName, products, addItem) {
-  let results = [];
-  for (var product of products) {
-    results.push(getIndividualButton(product, addItem))
-  }
-  return (
-    <div className="category flex-container">
-      <span className="category-name">{categoryName}</span>
-      <div className="category-choices">
-        {results}
-      </div>
-    </div>
-  );
-}
-
-function getIndividualButton(product, addItem) {
-  return (
-    <Button onClick={()=>{addItem(product.id)}} key={product.id}> {product.name} </Button>
-  )
-}
-
-function showSelected(products, selected, removeAllItem, removeOneOfItem) {
-  var result = []
-  for (var id in selected) {
-    if (selected[id]) {
-      result.push(selectedProduct(products.find((product)=>(product.id==id)), selected[id], removeAllItem, removeOneOfItem))
-    }
-  }
-  return (
-    <div className="flex-container">
-      {result}
-    </div>
-  )
-}
-
-function selectedProduct(product, number, removeAllItem, removeOneOfItem) {
-  return (
-    <div className="selected-product">
-      <div>
-        {product.name} : {number}
-      </div>
-      <Button onClick={()=>{removeOneOfItem(product.id)}}>-</Button>
-      <Button onClick={()=>{removeAllItem(product.id)}}>x</Button>
-    </div>
-  )
-}
-
-function getTotal(selected, products) {
-  var tot = 0
-  for (var product of products) {
-    tot -= + !!selected[product.id] && selected[product.id] * product.price
-  }
-  return tot
-}
 
 export default Form;

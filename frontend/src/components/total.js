@@ -1,7 +1,8 @@
 import React from 'react';
 import '../styles/total.scss';
 
-export default function Total({total}) {
+export default function Total({selected, products}) {
+  const total = getTotal(selected, products)
   return (
     <div className='total'>
       Total : {formatTotal(total)}
@@ -20,4 +21,12 @@ function formatTotal(total) {
   result = cents?(euros+'.'+cents.substring(0,2)):euros
   result += '€'
   return result
+}
+
+function getTotal(selected, products) {
+  var tot = 0
+  for (var product of products) {
+    tot -= + !!selected[product.id] && selected[product.id] * product.price
+  }
+  return tot
 }
