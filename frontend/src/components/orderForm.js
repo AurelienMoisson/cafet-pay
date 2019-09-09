@@ -4,7 +4,7 @@ import {getProducts} from "../api/products";
 import ShowSelected from './selected';
 import GetProductForm from './productButtons';
 import Reductions, {updatePossibleReductions} from './reductions';
-import Total from "./total";
+import Footer from "./footer";
 
 import "../styles/form.scss"
 
@@ -92,7 +92,7 @@ function Form() {
       <GetProductForm products={products} addItem={addItem}/>
       <ShowSelected products={products} selected={selected} removeAllItem={removeAllItem} removeOneOfItem={removeOneOfItem}/>
       <Reductions appliedReductions={appliedReductions} removeOneReduction={removeOneReduction} addOneReduction={addOneReduction}/>
-      <Total selected={selected} products={products} reductions={appliedReductions}/>
+      <Footer selected={selected} products={products} reductions={appliedReductions}/>
     </div>
   )
 }

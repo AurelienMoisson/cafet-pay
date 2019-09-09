@@ -1,4 +1,5 @@
 import React from 'react';
+
 import '../styles/total.scss';
 
 export default function Total({selected, products, reductions}) {
