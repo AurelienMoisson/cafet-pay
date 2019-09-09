@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 
-import {getProducts} from "../api/products";
+import {getProducts} from "../accountsAPI/products";
 import ShowSelected from './selected';
 import GetProductForm from './productButtons';
 import Reductions, {updatePossibleReductions} from './reductions';

@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button';
 
-import {getActiveReductions} from '../api/reductions';
+import {getActiveReductions} from '../accountsAPI/reductions';
 import {getTotalSpent, formatTotal} from './total';
 
 import '../styles/reductions.scss'
