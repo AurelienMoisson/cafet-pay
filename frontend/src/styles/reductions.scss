@@ -1,0 +1,44 @@
+.reductions-container {
+  width:100%;
+  display:flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  // justify-content: center;
+  align-items: stretch;
+  align-content: stretch;
+}
+
+.reduction {
+  background:#7f7;
+  border-radius:4px;
+  padding: 4px;
+  max-width:400px;
+}
+
+.reduction-header {
+  min-height: 25px;
+}
+
+.reduction-name {
+  float:left;
+  min-height: 20px;
+}
+
+.reduction-price {
+  float: right;
+  min-height: 20px;
+}
+
+.reduction-footer {
+  min-height:20px
+}
+
+.reduction-times {
+  float:left;
+  min-height:20px;
+}
+
+.reduction-total {
+  float:right;
+  min-height:20px;
+}

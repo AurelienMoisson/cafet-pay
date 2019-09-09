@@ -1,8 +1,8 @@
 import React from 'react';
 import '../styles/total.scss';
 
-export default function Total({selected, products}) {
-  const total = getTotal(selected, products)
+export default function Total({selected, products, reductions}) {
+  const total = getTotal(selected, products, reductions)
   return (
     <div className='total'>
       Total : {formatTotal(total)}
@@ -10,7 +10,7 @@ export default function Total({selected, products}) {
   )
 }
 
-function formatTotal(total) {
+export function formatTotal(total) {
   let result = ' '
   if (total) {
     result = total>0?'+':''
@@ -23,10 +23,23 @@ function formatTotal(total) {
   return result
 }
 
-function getTotal(selected, products) {
+function getTotal(selected, products, reductions) {
+  return getTotalSpent(selected, products) - getTotalReductions(reductions)
+}
+
+export function getTotalSpent(selected, products) {
   var tot = 0
   for (var product of products) {
     tot -= + !!selected[product.id] && selected[product.id] * product.price
+  }
+  return tot
+}
+
+function getTotalReductions(reductions) {
+  var tot = 0
+  for (var reductionId in reductions) {
+    const reduction = reductions[reductionId]
+    tot += reduction.timesApplied * reduction.reduction.price
   }
   return tot
 }
