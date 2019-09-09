@@ -6,7 +6,9 @@ function getTransactions(studentId) {
   return [{
     time:"03-09-2019T13:02:47",
     regularization:10,
-    products:{id
+    products:{/*id:number, ...*/},
+    reductions:{/*id:number, ...*/},
+  }]
 }
 
 
