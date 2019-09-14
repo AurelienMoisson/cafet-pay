@@ -16,7 +16,7 @@
  - Set the corret user and password in `Rocket.toml`
  - Install mysql (mariadb on Arch/Manjaro for example)
  - run `cargo install diesel_cli`
- - (optional) add `~/.cargo/` to path
+ - (optional) add `~/.cargo/bin` to path
  - run `DATABASE_URL=<url> diesel setup` where the url is the same than the one in the `Rocket.toml`.
 
 ## Running
