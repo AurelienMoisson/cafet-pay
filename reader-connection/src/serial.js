@@ -27,7 +27,7 @@ class CardReader {
     this.device = device
     device.on('data', (data) => this.parse(data))
     this.onFunctions = {'card':null}
-    this.previousCards = []
+    this.onOnceFunctions = {'card':[]}
     this.buffer = ""
 
     this.write = (...args) => this.device.write(...args)
@@ -45,23 +45,28 @@ class CardReader {
   }
 
   sendCard() {
-    if (this.onFunctions.card) {
+    if (this.onOnceFunctions.card && this.onOnceFunctions.card.length) {
+      console.log(this.onOnceFunctions.card)
+      let func = this.onOnceFunctions.card.shift()
+      func(this.buffer)
+    } else if (this.onFunctions.card) {
       this.onFunctions.card(this.buffer)
-    } else {
-      this.previousCards.push(this.buffer)
     }
     this.buffer = ""
   }
 
   on(label, func) {
     this.onFunctions[label] = func
-    if (this.onFunctions.card) {
-      for (var i = 0; i<this.previousCards.length; i++) {
-        this.onFunctions.card(this.previousCards[i])
-      }
-      this.previousCards = []
+  }
+
+  onOnce(label, func) {
+    if (this.onOnceFunctions[label]) {
+      this.onOnceFunctions[label].push(func)
+    } else {
+      this.onOnceFunctions[label] = [func]
     }
   }
+
 }
 
 

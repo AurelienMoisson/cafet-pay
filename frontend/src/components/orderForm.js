@@ -92,7 +92,7 @@ function Form() {
       <GetProductForm products={products} addItem={addItem}/>
       <ShowSelected products={products} selected={selected} removeAllItem={removeAllItem} removeOneOfItem={removeOneOfItem}/>
       <Reductions appliedReductions={appliedReductions} removeOneReduction={removeOneReduction} addOneReduction={addOneReduction}/>
-      <Footer selected={selected} products={products} reductions={appliedReductions}/>
+      <Footer selected={selected} products={products} reductions={appliedReductions} setSelected={setSelected}/>
     </div>
   )
 }

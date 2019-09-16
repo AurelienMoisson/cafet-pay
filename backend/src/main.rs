@@ -169,18 +169,60 @@ fn get_products(conn: CafetDb) -> JsonResult<Vec<Product>> {
     succeed(p)
 }
 
-#[derive(Deserialize)]
-struct ProductAddition {
-    pub name: String,
-    pub price: u64,
-}
-#[derive(Serialize)]
-struct ProductResponse {
-    pub id: u32,
+#[derive(Debug, Deserialize)]
+pub struct ProductAddition {
+    name: String,
+    category: String,
+    price: i16,
+    days_active: Vec<chrono::Weekday>,
 }
 
-#[put("/products")]
-fn add_new_product(conn: CafetDb, new_product: ProductAddition) {}
+#[derive(Debug, Serialize, Queryable)]
+pub struct NewProduct {
+    name: String,
+    id: i32,
+}
+
+#[put("/products", data = "<new_product>")]
+fn put_product(conn: CafetDb, new_product: Json<ProductAddition>) -> JsonResult<NewProduct> {
+    use schema::products::dsl::*;
+    let new_product = new_product.into_inner();
+    let mon = new_product.days_active.contains(&chrono::Weekday::Mon);
+    let tue = new_product.days_active.contains(&chrono::Weekday::Tue);
+    let wed = new_product.days_active.contains(&chrono::Weekday::Wed);
+    let thu = new_product.days_active.contains(&chrono::Weekday::Thu);
+    let fri = new_product.days_active.contains(&chrono::Weekday::Fri);
+    let we = new_product.days_active.contains(&chrono::Weekday::Sat)
+        || new_product.days_active.contains(&chrono::Weekday::Sun);
+    let addition = diesel::insert_into(products)
+        .values(&(
+            name.eq(new_product.name),
+            category.eq(new_product.category),
+            price.eq(new_product.price),
+            active_monday.eq(mon),
+            active_tuesday.eq(tue),
+            active_wednesday.eq(wed),
+            active_thursday.eq(thu),
+            active_friday.eq(fri),
+            active_weekend.eq(we),
+        ))
+        .returning((name, id))
+        .get_results(&*conn);
+    match addition {
+        Err(err) => {
+            warn!("Failed to insert new product: {:?}", err);
+            fail(ErrorKind::Internal)
+        }
+        Ok(mut new) => {
+            if new.len() == 1 {
+                succeed(new.pop().unwrap())
+            } else {
+                warn!("Insert product returned multiple or none {:?}", new);
+                fail(ErrorKind::Internal)
+            }
+        }
+    }
+}
 
 fn main() {
     rocket::ignite()
@@ -191,7 +233,8 @@ fn main() {
                 get_balance,
                 get_transactions,
                 get_since_negative,
-                get_products
+                get_products,
+                put_product,
             ],
         )
         .launch();
