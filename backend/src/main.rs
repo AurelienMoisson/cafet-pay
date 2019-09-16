@@ -12,7 +12,7 @@ extern crate rocket;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use rocket_contrib::json::Json;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use uuid::Uuid;
@@ -168,6 +168,19 @@ fn get_products(conn: CafetDb) -> JsonResult<Vec<Product>> {
     };
     succeed(p)
 }
+
+#[derive(Deserialize)]
+struct ProductAddition {
+    pub name: String,
+    pub price: u64,
+}
+#[derive(Serialize)]
+struct ProductResponse {
+    pub id: u32,
+}
+
+#[put("/products")]
+fn add_new_product(conn: CafetDb, new_product: ProductAddition) {}
 
 fn main() {
     rocket::ignite()
