@@ -130,19 +130,67 @@ fn get_since_negative(conn: CafetDb, id: String) -> JsonResult<SinceNegative> {
 struct Transaction {
     pub time: DateTime<Utc>,
     pub regularization: i32,
-    pub products: HashMap<i32, u64>,
-    pub reductions: HashMap<i32, u64>,
+    pub products: HashMap<i32, i32>,
+    pub reductions: HashMap<i32, i32>,
+}
+
+#[derive(Debug, Queryable)]
+struct TransactionData {
+    pub id: uuid::Uuid,
+    pub time: DateTime<Utc>,
+    pub regularization: i32,
 }
 
 #[get("/account/<id>/transactions")]
-fn get_transactions(id: String) -> Json<Vec<Transaction>> {
-    //TODO
-    Json(vec![Transaction {
-        time: Utc::now(),
-        regularization: 0,
-        products: HashMap::new(),
-        reductions: HashMap::new(),
-    }])
+fn get_transactions(conn: CafetDb, id: String) -> JsonResult<Vec<Transaction>> {
+    use schema::transactions::dsl::*;
+    let id: Uuid = match Uuid::parse_str(&id) {
+        Ok(i) => i,
+        Err(e) => {
+            info!("Invalid uuid: {:?}", e);
+            return fail(ErrorKind::InvalidUUID);
+        }
+    };
+    let transaction_ids: Vec<TransactionData> = match transactions
+        .filter(student_id.eq(id))
+        .select((transaction_id, time, regularization))
+        .distinct()
+        .load(&*conn)
+    {
+        Ok(d) => d,
+        Err(e) => {
+            warn!("Failure in getting transactions: {:?}", e);
+            return fail(ErrorKind::Internal);
+        }
+    };
+    let mut results = Vec::with_capacity(transaction_ids.len());
+    for data in transaction_ids {
+        use schema::transaction_details::dsl::*;
+        let product_pairs: Vec<(i32, i32)> = match transaction_details
+            .filter(transaction_id.eq(data.id))
+            .select((product_id, amount))
+            .distinct()
+            .load(&*conn)
+        {
+            Ok(products) => products,
+            Err(e) => {
+                warn!("Error retrieving transaction details: {:?}", e);
+                return fail(ErrorKind::Internal);
+            }
+        };
+        let reductions = HashMap::new();
+        let mut products = HashMap::new();
+        for (prod_id, prod_amount) in product_pairs {
+            products.insert(prod_id, prod_amount);
+        }
+        results.push(Transaction {
+            time: data.time,
+            regularization: data.regularization,
+            products,
+            reductions,
+        })
+    }
+    succeed(results)
 }
 
 #[derive(Serialize, Debug, Queryable)]

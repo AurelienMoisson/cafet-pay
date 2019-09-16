@@ -39,6 +39,7 @@ table! {
         transaction_id -> Uuid,
         student_id -> Uuid,
         regularization -> Int4,
+        time -> Timestamptz,
     }
 }
 
