@@ -4,11 +4,10 @@ use uuid::Uuid;
 #[derive(Queryable)]
 pub struct Account {
     pub student_id: Uuid,
-    pub last_transaction: Uuid,
+    pub last_transaction: Option<Uuid>,
     pub name: String,
-    pub balance: i32,
-    pub time_of_negative: chrono::NaiveDate,
-    pub transaction_in_negative: i32,
+    pub time_of_negative: Option<chrono::NaiveDate>,
+    pub transaction_in_negative: Option<i32>,
 }
 
 #[derive(Queryable)]

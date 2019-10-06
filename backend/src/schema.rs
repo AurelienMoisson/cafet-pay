@@ -1,11 +1,10 @@
 table! {
     accounts (student_id) {
         student_id -> Uuid,
-        last_transaction -> Uuid,
+        last_transaction -> Nullable<Uuid>,
         name -> Varchar,
-        balance -> Int4,
-        time_of_negative -> Date,
-        transaction_in_negative -> Int4,
+        time_of_negative -> Nullable<Date>,
+        transaction_in_negative -> Nullable<Int4>,
     }
 }
 

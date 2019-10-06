@@ -97,15 +97,15 @@ fn get_balance(conn: CafetDb, id: String) -> JsonResult<Balance> {
         }
     };
     match get_student(conn, id) {
-        Ok(s) => succeed(Balance { balance: s.balance }),
+        Ok(s) => succeed(Balance { balance: 0 }),
         Err(e) => fail(e),
     }
 }
 
 #[derive(Serialize, Debug)]
 struct SinceNegative {
-    time: chrono::NaiveDate,
-    amount_of_transactions: i32,
+    time: Option<chrono::NaiveDate>,
+    amount_of_transactions: Option<i32>,
 }
 
 #[get("/account/<id>/negative")]
@@ -272,6 +272,43 @@ fn put_product(conn: CafetDb, new_product: Json<ProductAddition>) -> JsonResult<
     }
 }
 
+#[derive(Deserialize, Debug)]
+struct AccountDetails {
+    name: String,
+}
+
+#[derive(Serialize, Debug, Queryable)]
+struct NewAccount {
+    id: Uuid,
+    name: String,
+}
+
+#[post("/account", data = "<details>")]
+fn new_account(conn: CafetDb, details: Json<AccountDetails>) -> JsonResult<NewAccount> {
+    use schema::accounts::dsl::*;
+    let new_account: Result<Vec<NewAccount>, _> = diesel::insert_into(accounts)
+        .values(&(
+            name.eq(details.into_inner().name),
+            student_id.eq(uuid::Uuid::new_v4()),
+        ))
+        .returning((student_id, name))
+        .get_results(&*conn);
+    match new_account {
+        Err(e) => {
+            warn!("Error in creating account: {:?}", e);
+            fail(ErrorKind::Internal)
+        }
+        Ok(mut new_account) => {
+            if new_account.len() != 1 {
+                warn!("New account returned {:?}", new_account);
+                fail(ErrorKind::Internal)
+            } else {
+                succeed(new_account.pop().unwrap())
+            }
+        }
+    }
+}
+
 fn main() {
     rocket::ignite()
         .attach(CafetDb::fairing())
@@ -283,6 +320,7 @@ fn main() {
                 get_since_negative,
                 get_products,
                 put_product,
+                new_account,
             ],
         )
         .launch();
