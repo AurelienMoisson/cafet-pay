@@ -1,2 +1,0 @@
-[global.databases]
-cafet_db = { url = "postgres://cafet-pay:aoeui@localhost/cafet-pay" }
