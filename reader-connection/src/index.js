@@ -1,5 +1,6 @@
 const serial = require('./serial')
 const express = require('express')
+const cors = require('cors')
 
 const cardReader = serial.connect()
 if (cardReader) {
@@ -12,11 +13,21 @@ if (cardReader) {
   console.log('could not connect')
 }
 
+
+var corsOptions = {
+  origin: 'http://localhost:3000',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
+
 function setupServer(cardReader) {
   var app = express();
 
-  app.get('/card', (req, res) => {
+  app.get('/card', 
+    cors(corsOptions),
+    (req, res) => {
     cardReader.onOnce('card', (card) => {
+      console.log('sending card:',card)
       res.send(card);
     })
   })
