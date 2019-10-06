@@ -42,6 +42,12 @@ struct JsonResponse<T: Serialize> {
     response: T,
 }
 
+impl<T: Serialize> JsonResponse<T> {
+    pub fn into_inner(self) -> T {
+        self.response
+    }
+}
+
 fn succeed<T: Serialize>(response: T) -> JsonResult<T> {
     Ok(Json(JsonResponse {
         status: "ok",
@@ -51,6 +57,10 @@ fn succeed<T: Serialize>(response: T) -> JsonResult<T> {
 
 type JsonResult<T> = Result<Json<JsonResponse<T>>, Json<Error>>;
 
+fn inner_most<T: Serialize>(e: Json<JsonResponse<T>>) -> T {
+    e.into_inner().into_inner()
+}
+
 #[derive(Debug, Serialize)]
 enum ErrorKind {
     #[serde(rename = "internal")]
@@ -59,6 +69,8 @@ enum ErrorKind {
     NotFound(String),
     #[serde(rename = "invalidUuid")]
     InvalidUUID,
+    #[serde(rename = "unknownProduct")]
+    UnknownProduct(i32),
 }
 
 fn get_student(conn: CafetDb, id: Uuid) -> Result<models::Account, ErrorKind> {
@@ -87,19 +99,33 @@ struct Balance {
     pub balance: i32,
 }
 
-#[get("/account/<id>/balance")]
-fn get_balance(conn: CafetDb, id: String) -> JsonResult<Balance> {
-    let id: Uuid = match Uuid::parse_str(&id) {
-        Ok(i) => i,
+#[get("/account/<student_id>/balance")]
+fn get_balance(conn: CafetDb, student_id: String) -> JsonResult<Balance> {
+    use schema::products::dsl::*;
+    let p_prices: HashMap<i32, i16> = match products
+        .select((id, price))
+        .distinct()
+        .load::<(i32, i16)>(&*conn)
+    {
+        Ok(p) => p.into_iter().collect(),
         Err(e) => {
-            info!("Invalid uuid: {:?}", e);
-            return fail(ErrorKind::InvalidUUID);
+            warn!("Database failure: {:?}", e);
+            return fail(ErrorKind::Internal);
         }
     };
-    match get_student(conn, id) {
-        Ok(s) => succeed(Balance { balance: 0 }),
-        Err(e) => fail(e),
+    let transactions = inner_most(get_transactions(conn, student_id)?);
+    let mut balance = 0;
+    for tx in transactions {
+        balance += tx.regularization;
+        for (p_id, p_count) in tx.products {
+            let p_price = match p_prices.get(&p_id) {
+                Some(p) => *p as i32,
+                None => return fail(ErrorKind::UnknownProduct(p_id)),
+            };
+            balance -= p_count * p_price;
+        }
     }
+    succeed(Balance { balance })
 }
 
 #[derive(Serialize, Debug)]
@@ -198,13 +224,14 @@ pub struct Product {
     name: String,
     category: String,
     price: i16,
+    id: i32,
 }
 
 #[get("/products")]
 fn get_products(conn: CafetDb) -> JsonResult<Vec<Product>> {
     use schema::products::dsl::*;
     let p: Vec<Product> = match products
-        .select((name, category, price))
+        .select((name, category, price, id))
         .distinct()
         .load::<Product>(&*conn)
     {
@@ -231,8 +258,8 @@ pub struct NewProduct {
     id: i32,
 }
 
-#[put("/products", data = "<new_product>")]
-fn put_product(conn: CafetDb, new_product: Json<ProductAddition>) -> JsonResult<NewProduct> {
+#[post("/products", data = "<new_product>")]
+fn post_product(conn: CafetDb, new_product: Json<ProductAddition>) -> JsonResult<NewProduct> {
     use schema::products::dsl::*;
     let new_product = new_product.into_inner();
     let mon = new_product.days_active.contains(&chrono::Weekday::Mon);
@@ -319,8 +346,8 @@ fn main() {
                 get_transactions,
                 get_since_negative,
                 get_products,
-                put_product,
                 new_account,
+                post_product,
             ],
         )
         .launch();
