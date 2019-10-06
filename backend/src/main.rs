@@ -24,44 +24,6 @@ pub mod schema;
 struct CafetDb(diesel::PgConnection);
 
 #[derive(Debug, Serialize)]
-struct Error {
-    status: &'static str,
-    reason: ErrorKind,
-}
-
-fn fail<T: Serialize>(reason: ErrorKind) -> JsonResult<T> {
-    Err(Json(Error {
-        status: "error",
-        reason,
-    }))
-}
-
-#[derive(Debug, Serialize)]
-struct JsonResponse<T: Serialize> {
-    status: &'static str,
-    response: T,
-}
-
-impl<T: Serialize> JsonResponse<T> {
-    pub fn into_inner(self) -> T {
-        self.response
-    }
-}
-
-fn succeed<T: Serialize>(response: T) -> JsonResult<T> {
-    Ok(Json(JsonResponse {
-        status: "ok",
-        response,
-    }))
-}
-
-type JsonResult<T> = Result<Json<JsonResponse<T>>, Json<Error>>;
-
-fn inner_most<T: Serialize>(e: Json<JsonResponse<T>>) -> T {
-    e.into_inner().into_inner()
-}
-
-#[derive(Debug, Serialize)]
 enum ErrorKind {
     #[serde(rename = "internal")]
     Internal,
@@ -71,6 +33,40 @@ enum ErrorKind {
     InvalidUUID,
     #[serde(rename = "unknownProduct")]
     UnknownProduct(i32),
+}
+
+#[derive(Debug, Serialize)]
+struct Error {
+    status: &'static str,
+    reason: ErrorKind,
+}
+
+#[derive(Debug, Serialize)]
+struct JsonResponse<T: Serialize> {
+    status: &'static str,
+    response: T,
+}
+impl<T: Serialize> JsonResponse<T> {
+    pub fn into_inner(self) -> T {
+        self.response
+    }
+}
+fn succeed<T: Serialize>(response: T) -> JsonResult<T> {
+    Ok(Json(JsonResponse {
+        status: "ok",
+        response,
+    }))
+}
+fn fail<T: Serialize>(reason: ErrorKind) -> JsonResult<T> {
+    Err(Json(Error {
+        status: "error",
+        reason,
+    }))
+}
+
+type JsonResult<T> = Result<Json<JsonResponse<T>>, Json<Error>>;
+fn inner_most<T: Serialize>(e: Json<JsonResponse<T>>) -> T {
+    e.into_inner().into_inner()
 }
 
 fn get_student(conn: CafetDb, id: Uuid) -> Result<models::Account, ErrorKind> {
@@ -98,14 +94,23 @@ fn get_student(conn: CafetDb, id: Uuid) -> Result<models::Account, ErrorKind> {
 struct Balance {
     pub balance: i32,
 }
-
 #[get("/account/<student_id>/balance")]
 fn get_balance(conn: CafetDb, student_id: String) -> JsonResult<Balance> {
+    let id: Uuid = match Uuid::parse_str(&student_id) {
+        Ok(i) => i,
+        Err(e) => {
+            info!("Invalid uuid: {:?}", e);
+            return fail(ErrorKind::InvalidUUID);
+        }
+    };
+    get_balance_uuid(&conn, id)
+}
+fn get_balance_uuid(conn: &CafetDb, student_id: Uuid) -> JsonResult<Balance> {
     use schema::products::dsl::*;
     let p_prices: HashMap<i32, i16> = match products
         .select((id, price))
         .distinct()
-        .load::<(i32, i16)>(&*conn)
+        .load::<(i32, i16)>(&**conn)
     {
         Ok(p) => p.into_iter().collect(),
         Err(e) => {
@@ -113,7 +118,7 @@ fn get_balance(conn: CafetDb, student_id: String) -> JsonResult<Balance> {
             return fail(ErrorKind::Internal);
         }
     };
-    let transactions = inner_most(get_transactions(conn, student_id)?);
+    let transactions = inner_most(get_transactions_uuid(conn, student_id)?);
     let mut balance = 0;
     for tx in transactions {
         balance += tx.regularization;
@@ -133,7 +138,6 @@ struct SinceNegative {
     time: Option<chrono::NaiveDate>,
     amount_of_transactions: Option<i32>,
 }
-
 #[get("/account/<id>/negative")]
 fn get_since_negative(conn: CafetDb, id: String) -> JsonResult<SinceNegative> {
     let id: Uuid = match Uuid::parse_str(&id) {
@@ -159,17 +163,14 @@ struct Transaction {
     pub products: HashMap<i32, i32>,
     pub reductions: HashMap<i32, i32>,
 }
-
 #[derive(Debug, Queryable)]
 struct TransactionData {
     pub id: uuid::Uuid,
     pub time: DateTime<Utc>,
     pub regularization: i32,
 }
-
 #[get("/account/<id>/transactions")]
 fn get_transactions(conn: CafetDb, id: String) -> JsonResult<Vec<Transaction>> {
-    use schema::transactions::dsl::*;
     let id: Uuid = match Uuid::parse_str(&id) {
         Ok(i) => i,
         Err(e) => {
@@ -177,11 +178,15 @@ fn get_transactions(conn: CafetDb, id: String) -> JsonResult<Vec<Transaction>> {
             return fail(ErrorKind::InvalidUUID);
         }
     };
+    get_transactions_uuid(&conn, id)
+}
+fn get_transactions_uuid(conn: &CafetDb, id: Uuid) -> JsonResult<Vec<Transaction>> {
+    use schema::transactions::dsl::*;
     let transaction_ids: Vec<TransactionData> = match transactions
         .filter(student_id.eq(id))
         .select((transaction_id, time, regularization))
         .distinct()
-        .load(&*conn)
+        .load(&**conn)
     {
         Ok(d) => d,
         Err(e) => {
@@ -196,7 +201,7 @@ fn get_transactions(conn: CafetDb, id: String) -> JsonResult<Vec<Transaction>> {
             .filter(transaction_id.eq(data.id))
             .select((product_id, amount))
             .distinct()
-            .load(&*conn)
+            .load(&**conn)
         {
             Ok(products) => products,
             Err(e) => {
@@ -226,7 +231,6 @@ pub struct Product {
     price: i16,
     id: i32,
 }
-
 #[get("/products")]
 fn get_products(conn: CafetDb) -> JsonResult<Vec<Product>> {
     use schema::products::dsl::*;
@@ -251,13 +255,11 @@ pub struct ProductAddition {
     price: i16,
     days_active: Vec<chrono::Weekday>,
 }
-
 #[derive(Debug, Serialize, Queryable)]
 pub struct NewProduct {
     name: String,
     id: i32,
 }
-
 #[post("/products", data = "<new_product>")]
 fn post_product(conn: CafetDb, new_product: Json<ProductAddition>) -> JsonResult<NewProduct> {
     use schema::products::dsl::*;
@@ -303,13 +305,11 @@ fn post_product(conn: CafetDb, new_product: Json<ProductAddition>) -> JsonResult
 struct AccountDetails {
     name: String,
 }
-
 #[derive(Serialize, Debug, Queryable)]
 struct NewAccount {
     id: Uuid,
     name: String,
 }
-
 #[post("/account", data = "<details>")]
 fn new_account(conn: CafetDb, details: Json<AccountDetails>) -> JsonResult<NewAccount> {
     use schema::accounts::dsl::*;
@@ -336,6 +336,53 @@ fn new_account(conn: CafetDb, details: Json<AccountDetails>) -> JsonResult<NewAc
     }
 }
 
+#[derive(Queryable, Serialize, Debug)]
+struct SearchedAccount {
+    id: Uuid,
+    name: String,
+    balance: i64,
+}
+#[get("/account/<search>")]
+fn search_account(conn: CafetDb, search: String) -> JsonResult<Vec<SearchedAccount>> {
+    use schema::accounts::dsl::*;
+    let matched_accounts: Vec<(Uuid, String)> = if search == "-all-" {
+        match accounts
+            .select((student_id, name))
+            .distinct()
+            .load::<(Uuid, String)>(&*conn)
+        {
+            Ok(p) => p,
+            Err(e) => {
+                warn!("Database failure: {:?}", e);
+                return fail(ErrorKind::Internal);
+            }
+        }
+    } else {
+        match accounts
+            .select((student_id, name))
+            .filter(name.ilike(format!("%{}%", search)))
+            .distinct()
+            .load::<(Uuid, String)>(&*conn)
+        {
+            Ok(p) => p,
+            Err(e) => {
+                warn!("Database failure: {:?}", e);
+                return fail(ErrorKind::Internal);
+            }
+        }
+    };
+    let mut res = Vec::with_capacity(matched_accounts.len());
+    for (s_id, s_name) in matched_accounts {
+        let balance = inner_most(get_balance_uuid(&conn, s_id)?).balance as i64;
+        res.push(SearchedAccount {
+            id: s_id,
+            name: s_name,
+            balance,
+        })
+    }
+    succeed(res)
+}
+
 fn main() {
     rocket::ignite()
         .attach(CafetDb::fairing())
@@ -346,8 +393,9 @@ fn main() {
                 get_transactions,
                 get_since_negative,
                 get_products,
-                new_account,
                 post_product,
+                new_account,
+                search_account
             ],
         )
         .launch();
