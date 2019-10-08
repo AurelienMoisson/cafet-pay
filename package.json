@@ -4,7 +4,12 @@
   "description": "This project is meant to enable students at my school to pay with their school cards.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm-run-all start-reader start-not-reader",
+    "start-not-reader": "npm-run-all -p start-backend start-frontend",
+    "start-backend":"cd backend; cargo run",
+    "start-reader":"cd reader-connection; npm start",
+    "start-frontend":"cd frontend; npm start"
   },
   "repository": {
     "type": "git",
@@ -15,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/AurelienMoisson/cafet-pay/issues"
   },
-  "homepage": "https://github.com/AurelienMoisson/cafet-pay#readme"
+  "homepage": "https://github.com/AurelienMoisson/cafet-pay#readme",
+  "dependencies": {
+    "npm-run-all": "^4.1.5"
+  }
 }

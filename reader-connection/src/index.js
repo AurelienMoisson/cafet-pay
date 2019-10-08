@@ -11,6 +11,7 @@ if (cardReader) {
   setupServer(cardReader)
 } else {
   console.log('could not connect')
+  process.exit(1);
 }
 
 
