@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tmux new-session -s cafet-pay -n cafet-pay -d 'npm run start-frontend'; tmux split-window -t cafet-pay -h 'npm run start-backend'; tmux split-window -t cafet-pay -h 'npm run start-reader'; tmux -2 attach-session -t cafet-pay",
+    "start": "tmux new-session -s cafet-pay -n cafet-pay -d 'npm run start-frontend; bash -i'; tmux split-window -t cafet-pay -h 'npm run start-backend; bash -i'; tmux split-window -t cafet-pay -h 'npm run start-reader; bash -i'; tmux -2 attach-session -t cafet-pay",
     "start-backend":"cd backend; cargo run",
     "start-reader":"cd reader-connection; npm start",
     "start-frontend":"cd frontend; npm start"
