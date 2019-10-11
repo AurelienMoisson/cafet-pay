@@ -106,3 +106,14 @@ This creates an account and returns
     }
 ]
 ```
+
+Cards are identified with `card_id`, an integer.
+
+ - GET `/account/<id>/cards` List all cards belonging to an account
+```
+[
+    card_id,
+]
+```
+ - DELETE `/account/<id>/cards/<card_id>` deletes the card from the account. No response
+ - POST `/account/<id>/cards/<card_id>` adds the card to the account. No response

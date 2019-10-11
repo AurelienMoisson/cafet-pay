@@ -33,6 +33,8 @@ enum ErrorKind {
     InvalidUUID,
     #[serde(rename = "unknownProduct")]
     UnknownProduct(i32),
+    #[serde(rename = "alreadyAssigned")]
+    AlreadyAsigned,
 }
 
 #[derive(Debug, Serialize)]
@@ -87,6 +89,82 @@ fn get_student(conn: CafetDb, id: Uuid) -> Result<models::Account, ErrorKind> {
     } else {
         warn!("Id {} is linked to more than one account", id);
         Err(ErrorKind::Internal)
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct CardAdded;
+#[post("/account/<id>/cards/<new_card>")]
+fn post_card(conn: CafetDb, id: String, new_card: i32) -> JsonResult<CardAdded> {
+    use schema::cards::dsl::*;
+    let id: Uuid = match Uuid::parse_str(&id) {
+        Ok(i) => i,
+        Err(e) => {
+            info!("Invalid uuid: {:?}", e);
+            return fail(ErrorKind::InvalidUUID);
+        }
+    };
+    match cards
+        .filter(card_id.eq(new_card))
+        .count()
+        .get_result(&*conn)
+    {
+        Ok(0) => (),
+        Ok(_) => return fail(ErrorKind::AlreadyAsigned),
+        Err(e) => {
+            warn!("Database error: {:?}", e);
+            return fail(ErrorKind::Internal);
+        }
+    };
+    match diesel::insert_into(cards)
+        .values(&(student_id.eq(id), card_id.eq(new_card)))
+        .execute(&*conn)
+    {
+        Ok(_) => succeed(CardAdded),
+        Err(e) => {
+            warn!("Database error: {:?}", e);
+            fail(ErrorKind::Internal)
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct CardDeleted;
+#[delete("/account/<id>/cards/<c_id>")]
+fn delete_card(conn: CafetDb, id: String, c_id: i32) -> JsonResult<CardDeleted> {
+    use schema::cards::dsl::*;
+    let id: Uuid = match Uuid::parse_str(&id) {
+        Ok(i) => i,
+        Err(e) => {
+            info!("Invalid uuid: {:?}", e);
+            return fail(ErrorKind::InvalidUUID);
+        }
+    };
+    match diesel::delete(cards.filter(student_id.eq(id)).filter(card_id.eq(c_id))).execute(&*conn) {
+        Ok(_) => succeed(CardDeleted),
+        Err(e) => {
+            warn!("Database error: {:?}", e);
+            fail(ErrorKind::Internal)
+        }
+    }
+}
+
+#[get("/account/<id>/cards")]
+fn get_cards(conn: CafetDb, id: String) -> JsonResult<Vec<i32>> {
+    use schema::cards::dsl::*;
+    let id: Uuid = match Uuid::parse_str(&id) {
+        Ok(i) => i,
+        Err(e) => {
+            info!("Invalid uuid: {:?}", e);
+            return fail(ErrorKind::InvalidUUID);
+        }
+    };
+    match cards.filter(student_id.eq(id)).select(card_id).load(&*conn) {
+        Ok(v) => succeed(v),
+        Err(e) => {
+            warn!("Database error: {:?}", e);
+            fail(ErrorKind::Internal)
+        }
     }
 }
 
@@ -383,9 +461,56 @@ fn search_account(conn: CafetDb, search: String) -> JsonResult<Vec<SearchedAccou
     succeed(res)
 }
 
+#[derive(Queryable, Serialize, Debug)]
+struct Reduction {
+    id: i32,
+    name: String,
+    products: Vec<i32>,
+    amount: i32,
+}
+#[get("/reductions")]
+fn get_reductions(conn: CafetDb) -> JsonResult<Vec<Reduction>> {
+    let ids: Vec<(i32, String, i32)> = {
+        use schema::reductions::dsl::*;
+        match reductions
+            .select((id, name, amount))
+            .load::<(i32, String, i32)>(&*conn)
+        {
+            Ok(v) => v,
+            Err(e) => {
+                warn!("Database error: {}", e);
+                return fail(ErrorKind::Internal);
+            }
+        }
+    };
+    let mut reductions = Vec::with_capacity(ids.len());
+    for (id, name, amount) in ids {
+        use schema::reductions_content::dsl::*;
+        let products: Vec<i32> = match reductions_content.select(product_id).load::<i32>(&*conn) {
+            Ok(v) => v,
+            Err(e) => {
+                warn!("Database error: {}", e);
+                return fail(ErrorKind::Internal);
+            }
+        };
+        reductions.push(Reduction {
+            id,
+            name,
+            amount,
+            products,
+        });
+    }
+    succeed(reductions)
+}
+
 fn main() {
+    let mut cors_options = rocket_cors::CorsOptions::default();
+    cors_options.allowed_origins = rocket_cors::AllowedOrigins::All;
+    cors_options.send_wildcard = true;
+
     rocket::ignite()
         .attach(CafetDb::fairing())
+        .attach(cors_options.to_cors().expect("cors creation failed"))
         .mount(
             "/api",
             routes![
@@ -395,7 +520,11 @@ fn main() {
                 get_products,
                 post_product,
                 new_account,
-                search_account
+                search_account,
+                get_reductions,
+                delete_card,
+                post_card,
+                get_cards,
             ],
         )
         .launch();

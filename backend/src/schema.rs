@@ -9,6 +9,13 @@ table! {
 }
 
 table! {
+    cards (card_id) {
+        student_id -> Uuid,
+        card_id -> Int4,
+    }
+}
+
+table! {
     products (id) {
         id -> Int4,
         category -> Varchar,
@@ -21,6 +28,22 @@ table! {
         active_thursday -> Bool,
         active_friday -> Bool,
         active_weekend -> Bool,
+    }
+}
+
+table! {
+    reductions (id) {
+        id -> Int4,
+        name -> Varchar,
+        amount -> Int4,
+    }
+}
+
+table! {
+    reductions_content (idx) {
+        idx -> Int4,
+        reduction_id -> Int4,
+        product_id -> Int4,
     }
 }
 
@@ -42,13 +65,19 @@ table! {
     }
 }
 
+joinable!(cards -> accounts (student_id));
+joinable!(reductions_content -> products (product_id));
+joinable!(reductions_content -> reductions (reduction_id));
 joinable!(transaction_details -> products (product_id));
 joinable!(transaction_details -> transactions (transaction_id));
 joinable!(transactions -> accounts (student_id));
 
 allow_tables_to_appear_in_same_query!(
     accounts,
+    cards,
     products,
+    reductions,
+    reductions_content,
     transaction_details,
     transactions,
 );
